@@ -1,3 +1,12 @@
+## v1.2.0 - List Planner tasks
+Microsoft Planner workflows gain a dedicated `listTasks` helper so you can fetch, filter, and resolve tasks from plans and buckets without hitting Graph manually. The README now shows bucket and due-date examples to highlight the new filtering and assignment helpers.
+
+### Added
+- Added `listTasks` to resolve plan/bucket IDs, support unassigned or user filters, honor `dueBefore`/`dueAfter`, and optionally resolve emails via Graph to return the filtered task list reliably.
+
+### Changed
+- Documented the `listTasks` workflow with bucket-specific and due-date examples so new Planner scenarios are discoverable in README guides.
+
 ## v1.1.2 - Clarify resolveUsers behavior
 Documented that `ms-planner.resolveUsers` can force resolving non-email identifiers so Planner configs understand how user lookups behave.
 

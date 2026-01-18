@@ -60,6 +60,21 @@
     return d.toISOString();
   }
 
+  function parseDueDate(task) {
+    if (!task) return null;
+    const raw = task.dueDateTime;
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      const d = new Date(raw);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof raw === 'object' && raw.dateTime) {
+      const d = new Date(raw.dateTime);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+  }
+
   function pickPriority(val) {
     if (val === 0 || val === 1 || val === 2 || val === 3 || val === 4 || val === 5 || val === 6 || val === 7 || val === 8 || val === 9 || val === 10) {
       return val;
@@ -94,6 +109,15 @@
       if (idFromWeb) return idFromWeb;
     }
     return pickPlanId(raw);
+  }
+
+  function resolvePlanId(opts) {
+    const planLink = (opts && opts.planLink) || sys.env.get('ms-planner.planLink');
+    const planId = (opts && opts.planId)
+      || cfg.planId
+      || envGet('ms-planner.planId', 'planner.planId')
+      || (planLink ? parsePlanIdFromLink(planLink) : '');
+    return { planId, planLink };
   }
 
   async function resolveBucketId(overrides, auth, debug) {
@@ -315,11 +339,9 @@
 
       const auth = opts.auth || cfg.auth;
       const debug = typeof opts.debug === 'boolean' ? opts.debug : cfg.debug;
-      const planLink = opts.planLink || sys.env.get('ms-planner.planLink');
-      const planId = opts.planId
-        || cfg.planId
-        || envGet('ms-planner.planId', 'planner.planId')
-        || (planLink ? parsePlanIdFromLink(planLink) : '');
+      const planInfo = resolvePlanId(opts);
+      const planLink = planInfo.planLink;
+      const planId = planInfo.planId;
       if (!planId) return { ok: false, error: 'ms-planner.createTask: planId is required' };
 
       const bucketRes = await resolveBucketId(
@@ -392,6 +414,77 @@
     }
   }
 
+  async function listTasks(opts) {
+    try {
+      const input = (opts && typeof opts === 'object') ? opts : {};
+      const auth = input.auth || cfg.auth;
+      const debug = typeof input.debug === 'boolean' ? input.debug : cfg.debug;
+      const resolveUsers = typeof input.resolveUsers === 'boolean'
+        ? input.resolveUsers
+        : (typeof cfg.resolveUsers === 'boolean' ? cfg.resolveUsers : (envFlag('ms-planner.resolveUsers', 'planner.resolveUsers') === true));
+      const planInfo = resolvePlanId(input);
+      const planLink = planInfo.planLink;
+      const planId = planInfo.planId;
+      if (!planId) return { ok: false, error: 'ms-planner.listTasks: planId is required' };
+
+      let path = `planner/plans/${encodeURIComponent(planId)}/tasks`;
+      if (input.bucketId || input.bucketName || cfg.bucketId || cfg.bucketName || envGet('ms-planner.bucket', 'planner.bucket')) {
+        const bucketRes = await resolveBucketId(
+          { planId, planLink, bucketId: input.bucketId, bucketName: input.bucketName },
+          auth,
+          debug
+        );
+        if (!bucketRes.ok) return { ok: false, error: bucketRes.error };
+        path = `planner/buckets/${encodeURIComponent(String(bucketRes.data))}/tasks`;
+      }
+
+      const query = [];
+      if (input.top) query.push(`$top=${encodeURIComponent(String(input.top))}`);
+      const url = query.length ? `${path}?${query.join('&')}` : path;
+      const res = await graph.json({ path: url, auth, debug });
+      if (!res || !res.ok) {
+        return { ok: false, error: (res && res.error) || 'ms-planner.listTasks: request failed', status: res && res.status };
+      }
+      const list = (res.data && res.data.value) ? res.data.value : [];
+      let filtered = list.slice();
+
+      if (input.unassigned === true) {
+        filtered = filtered.filter((task) => !task.assignments || Object.keys(task.assignments).length === 0);
+      }
+
+      if (input.assignedTo) {
+        const identifier = String(input.assignedTo || '');
+        let userId = identifier;
+        const shouldResolve = resolveUsers || identifier.indexOf('@') >= 0;
+        if (shouldResolve && !isGuid(identifier)) {
+          const resUser = await resolveUserId(identifier, auth, debug);
+          if (!resUser.ok) {
+            return { ok: false, error: resUser.error || 'ms-planner.listTasks: failed to resolve assignee' };
+          }
+          userId = resUser.data;
+        }
+        filtered = filtered.filter((task) => task.assignments && Object.prototype.hasOwnProperty.call(task.assignments, userId));
+      }
+
+      if (input.dueBefore || input.dueAfter) {
+        const before = input.dueBefore ? new Date(input.dueBefore) : null;
+        const after = input.dueAfter ? new Date(input.dueAfter) : null;
+        filtered = filtered.filter((task) => {
+          const due = parseDueDate(task);
+          if (!due) return false;
+          if (before && !isNaN(before.getTime()) && due > before) return false;
+          if (after && !isNaN(after.getTime()) && due < after) return false;
+          return true;
+        });
+      }
+
+      return { ok: true, data: Object.assign({}, res.data, { value: filtered }), status: res.status };
+    } catch (e) {
+      log.error('listTasks:error', (e && (e.message || e)) || 'unknown');
+      return { ok: false, error: (e && (e.message || String(e))) || 'unknown' };
+    }
+  }
+
   async function assignTask(opts) {
     try {
       if (!opts || typeof opts !== 'object') return { ok: false, error: 'ms-planner.assignTask: options required' };
@@ -447,5 +540,5 @@
     }
   }
 
-  module.exports = { configure, createTask, assignTask };
+  module.exports = { configure, createTask, listTasks, assignTask };
 })();

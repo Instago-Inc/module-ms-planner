@@ -13,6 +13,9 @@ It focuses on a simple, reliable path: create tasks in a plan and assign people 
 - `createTask(opts) -> { ok, data, error, status }`
   - Required: `title`, `planLink` (or `configure()`/env).
   - Optional: `bucketName`, `assignTo`/`assignees`, `dueDate`, `startDate`, `priority`, `labels`/`categories`, `description`, `references`, `resolveUsers`, `auth`, `debug`.
+- `listTasks(opts) -> { ok, data, error, status }`
+  - Required: `planLink` (or `configure()`/env).
+  - Optional: `bucketName`, `top`, `assignedTo`, `unassigned`, `dueBefore`, `dueAfter`, `resolveUsers`, `auth`, `debug`.
 - `assignTask(opts) -> { ok, data, error, status }`
   - Required: `taskId`, `assignTo`/`assignees`.
   - Optional: `resolveUsers`, `auth`, `debug`.
@@ -73,6 +76,35 @@ const res = await planner.createTask({
 });
 
 console.log(res.ok, res.data && res.data.id);
+```
+
+List tasks from a bucket:
+
+```js
+const planner = require('ms-planner@latest');
+
+const res = await planner.listTasks({
+  planLink: 'https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...',
+  bucketName: 'Backlog',
+  top: 20
+});
+
+console.log(res.ok, res.data && res.data.value ? res.data.value.length : 0);
+```
+
+List tasks due soon without an owner:
+
+```js
+const planner = require('ms-planner@latest');
+
+const res = await planner.listTasks({
+  planLink: 'https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...',
+  dueBefore: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+  unassigned: true,
+  top: 200
+});
+
+console.log(res.ok, res.data && res.data.value ? res.data.value.length : 0);
 ```
 
 Assign additional users to an existing task:
