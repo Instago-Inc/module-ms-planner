@@ -1,0 +1,22 @@
+{
+  "name": "@instago/ms-planner",
+  "version": "1.0.1",
+  "description": "Microsoft Planner helper for creating tasks and assigning users.",
+  "main": "index.js",
+  "type": "commonjs",
+  "license": "SEE LICENSE IN LICENSE",
+  "keywords": [
+    "ms-planner",
+    "planner",
+    "microsoft",
+    "graph",
+    "tasks",
+    "instago"
+  ],
+  "files": [
+    "index.js",
+    "ReadMe.MD",
+    "LICENSE",
+    "env.json"
+  ]
+}
