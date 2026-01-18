@@ -32,7 +32,7 @@ Env keys:
 - `ms-planner.planLink`
 - `ms-planner.bucket` (optional)
 - `ms-planner.assignTo` (optional; comma- or semicolon-separated emails or user IDs)
-- `ms-planner.resolveUsers` (optional; `1` to resolve emails/UPNs into user IDs)
+- `ms-planner.resolveUsers` (optional; `1` to force resolving non-email identifiers like usernames/display names)
 
 Note: the module accepts `ms-planner.planLink` and resolves `planId` automatically when provided.
 

@@ -1,3 +1,9 @@
+## v1.1.2 - Clarify resolveUsers behavior
+Documented that `ms-planner.resolveUsers` can force resolving non-email identifiers so Planner configs understand how user lookups behave.
+
+### Changed
+- Updated the README to explain when to enable `ms-planner.resolveUsers` and what it resolves beyond email inputs.
+
 ## v1.1.1 - Clarify planLink usage
 Doc examples now lean on `planLink` instead of `planId` so users quickly understand how to configure and create tasks from Planner URLs in the latest release.
 
