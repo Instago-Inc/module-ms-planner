@@ -1,43 +1,17 @@
 # module/ms-planner - V8 module
 
-Microsoft Planner keeps teams aligned on work that actually gets shipped. This module is a small helper for creating and assigning Planner tasks from your Instago flows without turning every step into a long Graph call. Learn more about Instago at https://instago.ai.
+Microsoft Planner helps teams stay aligned on tasks and deadlines. This module wraps the repetitive parts so your workflows can add and assign tasks quickly without extra plumbing.
 
-It focuses on a simple, reliable path: create tasks in a plan and assign people by user ID or email, with defensive defaults so missing data fails softly.
+It is built to be predictable: inputs are validated, errors are returned in a consistent shape, and defaults can be set once and reused. Learn more about Instago at https://instago.ai.
 
 ## Technical reference
 
-### API
+### Exports
 
 - `configure(opts)`
-  - Optional defaults: `planLink`, `bucketName`, `resolveUsers`, `debug`, `auth`.
 - `createTask(opts) -> { ok, data, error, status }`
-  - Required: `title`, `planLink` (or `configure()`/env).
-  - Optional: `bucketName`, `assignTo`/`assignees`, `dueDate`, `startDate`, `priority`, `labels`/`categories`, `description`, `references`, `resolveUsers`, `auth`, `debug`.
 - `listTasks(opts) -> { ok, data, error, status }`
-  - Required: `planLink` (or `configure()`/env).
-  - Optional: `bucketName`, `top`, `assignedTo`, `unassigned`, `dueBefore`, `dueAfter`, `resolveUsers`, `auth`, `debug`.
 - `assignTask(opts) -> { ok, data, error, status }`
-  - Required: `taskId`, `assignTo`/`assignees`.
-  - Optional: `resolveUsers`, `auth`, `debug`.
-
-### Configuration
-
-`configure()` and per-call options accept:
-
-- `planLink`: Planner plan link (Teams/Planner URL). The module extracts `planId` automatically.
-- `bucketName`: Bucket name to resolve within the plan.
-- `resolveUsers`: Boolean. When true, resolves emails/UPNs to user IDs.
-- `auth`: Graph auth overrides (access token or OAuth details used by `graph@latest`).
-- `debug`: Boolean to emit extra logs.
-
-Env keys:
-
-- `ms-planner.planLink`
-- `ms-planner.bucket` (optional)
-- `ms-planner.assignTo` (optional; comma- or semicolon-separated emails or user IDs)
-- `ms-planner.resolveUsers` (optional; `1` to force resolving non-email identifiers like usernames/display names)
-
-Note: the module accepts `ms-planner.planLink` and resolves `planId` automatically when provided.
 
 ### Usage
 
@@ -45,7 +19,7 @@ Note: the module accepts `ms-planner.planLink` and resolves `planId` automatical
 const planner = require('ms-planner@latest');
 
 planner.configure({
-  planLink: 'https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...',
+  planId: 'PLAN_ID',
   bucketName: 'Backlog',
   resolveUsers: true
 });
@@ -53,7 +27,7 @@ planner.configure({
 const res = await planner.createTask({
   title: 'Prepare kickoff deck',
   assignTo: ['alex@example.com'],
-  labels: ['priority high'], // auto-creates plan label slots when missing
+  labels: ['priority high'],
   references: [{ url: 'https://github.com/acme/repo/issues/123', alias: 'GitHub issue' }],
   description: 'Summary goes here.',
   dueDate: '2025-02-10T17:00:00Z'
@@ -62,9 +36,51 @@ const res = await planner.createTask({
 if (!res.ok) console.error(res.error);
 ```
 
+### Configuration
+
+`configure(opts)` defaults:
+
+- `planId`: Planner plan ID used when `planId` or `planLink` is omitted per call.
+- `bucketId`: Planner bucket ID default.
+- `bucketName`: Planner bucket name default.
+- `defaultAssignees`: Array of user IDs/emails used when `assignTo`/`assignees` are omitted.
+- `resolveUsers`: Boolean; resolve emails/UPNs to user IDs.
+- `auth`: Auth override object.
+- `debug`: Boolean; enable extra logging.
+
+Env keys (from `env.json`):
+
+- `ms-planner.planLink` (required)
+- `ms-planner.bucket` (optional)
+- `ms-planner.assignTo` (optional; comma- or semicolon-separated emails or user IDs)
+- `ms-planner.resolveUsers` (optional; `1`/`true` to resolve emails/UPNs to IDs)
+
+### API details
+
+`createTask(opts)`:
+
+- Required: `title`.
+- Plan selection: `planId` or `planLink` (per call, env, or `configure`).
+- Bucket selection: `bucketId` or `bucketName` (per call, env, or `configure`).
+- Assignment: `assignTo`/`assignees` (array or delimited string), `resolveUsers`.
+- Scheduling: `dueDate`/`dueDateTime`, `startDate`/`startDateTime`.
+- `priority`: number `0-10` or string (`urgent`, `important`, `medium`, `low`).
+- Metadata: `labels`/`categories`, `description`, `references`.
+- Auth/debug: `auth`, `debug`.
+
+`listTasks(opts)`:
+
+- Required: `planId` or `planLink`.
+- Optional: `bucketId`, `bucketName`, `top`, `assignedTo`, `unassigned`, `dueBefore`, `dueAfter`, `resolveUsers`, `auth`, `debug`.
+
+`assignTask(opts)`:
+
+- Required: `taskId`, `assignTo`/`assignees`.
+- Optional: `resolveUsers`, `auth`, `debug`.
+
 ### Examples
 
-Create a task with explicit IDs:
+Create a task using a plan link:
 
 ```js
 const planner = require('ms-planner@latest');

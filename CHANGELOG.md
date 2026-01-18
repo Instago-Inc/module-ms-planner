@@ -1,3 +1,12 @@
+## v1.3.0 - Seamless Planner Authentication
+Automatic Microsoft Planner authentication now kicks in when tasks, assignments, or listings run without explicit Graph credentials, and the docs highlight the expanded defaults/environment keys providers need to configure plan IDs, buckets, and assignees.
+
+### Added
+- Added `ensureAuth` so requests automatically load `msauth-config`, prompt for device login when required, and reuse refreshed tokens when `auth` is omitted from `createTask`, `listTasks`, or `assignTask`.
+
+### Changed
+- Reorganized the README to surface configuration defaults, environment keys, and API details so the new auth workflow and option names are discoverable alongside each Planner helper.
+
 ## v1.2.0 - List Planner tasks
 Microsoft Planner workflows gain a dedicated `listTasks` helper so you can fetch, filter, and resolve tasks from plans and buckets without hitting Graph manually. The README now shows bucket and due-date examples to highlight the new filtering and assignment helpers.
 

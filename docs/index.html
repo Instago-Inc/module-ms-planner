@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ms-planner Documentation</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 48px 24px;
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      main {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+      }
+      .intro {
+        font-size: 16px;
+        color: #e2e8f0;
+      }
+      p {
+        margin: 0 0 16px;
+        color: #cbd5f5;
+      }
+      ul {
+        margin: 12px 0 0;
+        padding-left: 18px;
+      }
+      a {
+        color: #93c5fd;
+      }
+      .section {
+        margin-top: 28px;
+      }
+      .muted {
+        color: #94a3b8;
+        font-size: 14px;
+        margin: 6px 0 0;
+      }
+      .code {
+        background: #0b1220;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        padding: 16px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #e2e8f0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>module/ms-planner - V8 module</h1>
+      <p class="intro">Microsoft Planner helps teams stay aligned on tasks and deadlines. This module wraps the repetitive parts so your workflows can add and assign tasks quickly without extra plumbing.</p>
+      <p class="muted">Learn more at <a href="https://instago.ai" target="_blank" rel="noopener">https://instago.ai</a>.</p>
+      <div class="section">
+        <h2>Technical reference</h2>
+        <h1>module/ms-planner - V8 module</h1>
+<p>Microsoft Planner helps teams stay aligned on tasks and deadlines. This module wraps the repetitive parts so your workflows can add and assign tasks quickly without extra plumbing.</p>
+<p>It is built to be predictable: inputs are validated, errors are returned in a consistent shape, and defaults can be set once and reused. Learn more about Instago at https://instago.ai.</p>
+<h2>Technical reference</h2>
+<h3>Exports</h3>
+<ul>
+<li><code>configure(opts)</code></li>
+<li><code>createTask(opts) -&gt; { ok, data, error, status }</code></li>
+<li><code>listTasks(opts) -&gt; { ok, data, error, status }</code></li>
+<li><code>assignTask(opts) -&gt; { ok, data, error, status }</code></li>
+</ul>
+<h3>Usage</h3>
+<pre class="code"><code>
+const planner = require(&#x27;ms-planner@latest&#x27;);
+
+planner.configure({
+  planId: &#x27;PLAN_ID&#x27;,
+  bucketName: &#x27;Backlog&#x27;,
+  resolveUsers: true
+});
+
+const res = await planner.createTask({
+  title: &#x27;Prepare kickoff deck&#x27;,
+  assignTo: [&#x27;alex@example.com&#x27;],
+  labels: [&#x27;priority high&#x27;],
+  references: [{ url: &#x27;https://github.com/acme/repo/issues/123&#x27;, alias: &#x27;GitHub issue&#x27; }],
+  description: &#x27;Summary goes here.&#x27;,
+  dueDate: &#x27;2025-02-10T17:00:00Z&#x27;
+});
+
+if (!res.ok) console.error(res.error);
+</code></pre>
+<h3>Configuration</h3>
+<p><code>configure(opts)</code> defaults:</p>
+<ul>
+<li><code>planId</code>: Planner plan ID used when <code>planId</code> or <code>planLink</code> is omitted per call.</li>
+<li><code>bucketId</code>: Planner bucket ID default.</li>
+<li><code>bucketName</code>: Planner bucket name default.</li>
+<li><code>defaultAssignees</code>: Array of user IDs/emails used when <code>assignTo</code>/<code>assignees</code> are omitted.</li>
+<li><code>resolveUsers</code>: Boolean; resolve emails/UPNs to user IDs.</li>
+<li><code>auth</code>: Auth override object.</li>
+<li><code>debug</code>: Boolean; enable extra logging.</li>
+</ul>
+<p>Env keys (from <code>env.json</code>):</p>
+<ul>
+<li><code>ms-planner.planLink</code> (required)</li>
+<li><code>ms-planner.bucket</code> (optional)</li>
+<li><code>ms-planner.assignTo</code> (optional; comma- or semicolon-separated emails or user IDs)</li>
+<li><code>ms-planner.resolveUsers</code> (optional; <code>1</code>/<code>true</code> to resolve emails/UPNs to IDs)</li>
+</ul>
+<h3>API details</h3>
+<p><code>createTask(opts)</code>:</p>
+<ul>
+<li>Required: <code>title</code>.</li>
+<li>Plan selection: <code>planId</code> or <code>planLink</code> (per call, env, or <code>configure</code>).</li>
+<li>Bucket selection: <code>bucketId</code> or <code>bucketName</code> (per call, env, or <code>configure</code>).</li>
+<li>Assignment: <code>assignTo</code>/<code>assignees</code> (array or delimited string), <code>resolveUsers</code>.</li>
+<li>Scheduling: <code>dueDate</code>/<code>dueDateTime</code>, <code>startDate</code>/<code>startDateTime</code>.</li>
+<li><code>priority</code>: number <code>0-10</code> or string (<code>urgent</code>, <code>important</code>, <code>medium</code>, <code>low</code>).</li>
+<li>Metadata: <code>labels</code>/<code>categories</code>, <code>description</code>, <code>references</code>.</li>
+<li>Auth/debug: <code>auth</code>, <code>debug</code>.</li>
+</ul>
+<p><code>listTasks(opts)</code>:</p>
+<ul>
+<li>Required: <code>planId</code> or <code>planLink</code>.</li>
+<li>Optional: <code>bucketId</code>, <code>bucketName</code>, <code>top</code>, <code>assignedTo</code>, <code>unassigned</code>, <code>dueBefore</code>, <code>dueAfter</code>, <code>resolveUsers</code>, <code>auth</code>, <code>debug</code>.</li>
+</ul>
+<p><code>assignTask(opts)</code>:</p>
+<ul>
+<li>Required: <code>taskId</code>, <code>assignTo</code>/<code>assignees</code>.</li>
+<li>Optional: <code>resolveUsers</code>, <code>auth</code>, <code>debug</code>.</li>
+</ul>
+<h3>Examples</h3>
+<p>Create a task using a plan link:</p>
+<pre class="code"><code>
+const planner = require(&#x27;ms-planner@latest&#x27;);
+
+const res = await planner.createTask({
+  planLink: &#x27;https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...&#x27;,
+  title: &#x27;Draft release notes&#x27;,
+  assignTo: [&#x27;00000000-0000-0000-0000-000000000000&#x27;]
+});
+
+console.log(res.ok, res.data &amp;&amp; res.data.id);
+</code></pre>
+<p>List tasks from a bucket:</p>
+<pre class="code"><code>
+const planner = require(&#x27;ms-planner@latest&#x27;);
+
+const res = await planner.listTasks({
+  planLink: &#x27;https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...&#x27;,
+  bucketName: &#x27;Backlog&#x27;,
+  top: 20
+});
+
+console.log(res.ok, res.data &amp;&amp; res.data.value ? res.data.value.length : 0);
+</code></pre>
+<p>List tasks due soon without an owner:</p>
+<pre class="code"><code>
+const planner = require(&#x27;ms-planner@latest&#x27;);
+
+const res = await planner.listTasks({
+  planLink: &#x27;https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...&#x27;,
+  dueBefore: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+  unassigned: true,
+  top: 200
+});
+
+console.log(res.ok, res.data &amp;&amp; res.data.value ? res.data.value.length : 0);
+</code></pre>
+<p>Assign additional users to an existing task:</p>
+<pre class="code"><code>
+const planner = require(&#x27;ms-planner@latest&#x27;);
+
+const res = await planner.assignTask({
+  taskId: &#x27;TASK_ID&#x27;,
+  assignTo: [&#x27;sam@example.com&#x27;, &#x27;jordan@example.com&#x27;],
+  resolveUsers: true
+});
+
+console.log(res.ok, res.error);
+</code></pre>
+      </div>
+      <div class="section">
+  <h2>Changelog</h2>
+  <h2>v1.2.0 - List Planner tasks</h2>
+<p>Microsoft Planner workflows gain a dedicated <code>listTasks</code> helper so you can fetch, filter, and resolve tasks from plans and buckets without hitting Graph manually. The README now shows bucket and due-date examples to highlight the new filtering and assignment helpers.</p>
+<h3>Added</h3>
+<ul>
+<li>Added <code>listTasks</code> to resolve plan/bucket IDs, support unassigned or user filters, honor <code>dueBefore</code>/<code>dueAfter</code>, and optionally resolve emails via Graph to return the filtered task list reliably.</li>
+</ul>
+<h3>Changed</h3>
+<ul>
+<li>Documented the <code>listTasks</code> workflow with bucket-specific and due-date examples so new Planner scenarios are discoverable in README guides.</li>
+</ul>
+<h2>v1.1.2 - Clarify resolveUsers behavior</h2>
+<p>Documented that <code>ms-planner.resolveUsers</code> can force resolving non-email identifiers so Planner configs understand how user lookups behave.</p>
+<h3>Changed</h3>
+<ul>
+<li>Updated the README to explain when to enable <code>ms-planner.resolveUsers</code> and what it resolves beyond email inputs.</li>
+</ul>
+<h2>v1.1.1 - Clarify planLink usage</h2>
+<p>Doc examples now lean on <code>planLink</code> instead of <code>planId</code> so users quickly understand how to configure and create tasks from Planner URLs in the latest release.</p>
+<h3>Changed</h3>
+<ul>
+<li>Updated API docs and samples to highlight <code>planLink</code> configuration, remove outdated <code>bucketId</code> requirements, and refresh placeholder emails to match the documented Planner flow.</li>
+</ul>
+<h2>v1.1.0 - Autoparse Planner links</h2>
+<p>ms-planner now extracts plan IDs from Planner links and treats <code>ms-planner.planLink</code> as a primary configuration entry so task flows require less manual input.</p>
+<h3>Added</h3>
+<ul>
+<li>Added <code>planLink</code> support and plan-id parsing helpers so <code>ms-planner</code> can resolve plans directly from Planner URLs or contexts in both createTask and bucket resolution logic.</li>
+<li>Updated the environment manifest to expose <code>ms-planner.planLink</code> as a required field while keeping bucket/assignment overrides optional, simplifying deployment documentation.</li>
+</ul>
+<h2>v1.0.1 - Streamline Microsoft Planner automation</h2>
+<p>Microsoft Planner helper centralizes bucket/user resolution, assignment building, task detail updates, and category syncing so Instago flows can create Planner tasks via Graph with fewer moving pieces.</p>
+<h3>Added</h3>
+<ul>
+<li>Added configuration defaults plus bucket/bucket-name resolution, assignment building, label/category syncing, and reference merging to simplify Planner task creation and detail updates.</li>
+<li>Added <code>assignTask</code> along with robust priority/date parsing and bucket/user resolvers so Planner work stays synced even when inputs are partial.</li>
+</ul>
+</div>
+    </main>
+  </body>
+</html>

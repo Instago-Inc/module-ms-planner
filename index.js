@@ -1,5 +1,7 @@
 (function () {
   const graph = require('graph@latest');
+  const msauth = require('msauth@latest');
+  const msAuthConfig = require('msauth-config@latest');
   const log = require('log@latest').create('ms-planner');
 
   const cfg = {
@@ -332,12 +334,35 @@
     return { ok: true };
   }
 
+  async function ensureAuth(inputAuth) {
+    if (inputAuth && typeof inputAuth === 'object') return inputAuth;
+    const res = await msauth.ensureAuthenticated(msAuthConfig.load({ scope: 'planner' }));
+    if (res && res.status === 'ok' && res.tokens) {
+      const cfg = msAuthConfig.load({ scope: 'planner' });
+      return {
+        accessToken: res.tokens.access_token,
+        refreshToken: res.tokens.refresh_token,
+        tenant: cfg.tenant,
+        clientId: cfg.clientId,
+        clientSecret: cfg.clientSecret,
+        scope: cfg.scope
+      };
+    }
+      if (res && res.status === 'pending' && res.device) {
+        const verifyUrl = res.device.verification_uri || 'https://microsoft.com/devicelogin';
+        const userCode = res.device.user_code || '';
+        log.error('auth pending: verify at', verifyUrl, 'code', userCode);
+        throw new Error('ms-planner: auth pending, please complete device login');
+      }
+    throw new Error('ms-planner: auth failed');
+  }
+
   async function createTask(opts) {
     try {
       if (!opts || typeof opts !== 'object') return { ok: false, error: 'ms-planner.createTask: options required' };
       if (!opts.title) return { ok: false, error: 'ms-planner.createTask: title is required' };
 
-      const auth = opts.auth || cfg.auth;
+      const auth = await ensureAuth(opts.auth || cfg.auth);
       const debug = typeof opts.debug === 'boolean' ? opts.debug : cfg.debug;
       const planInfo = resolvePlanId(opts);
       const planLink = planInfo.planLink;
@@ -417,7 +442,7 @@
   async function listTasks(opts) {
     try {
       const input = (opts && typeof opts === 'object') ? opts : {};
-      const auth = input.auth || cfg.auth;
+      const auth = await ensureAuth(input.auth || cfg.auth);
       const debug = typeof input.debug === 'boolean' ? input.debug : cfg.debug;
       const resolveUsers = typeof input.resolveUsers === 'boolean'
         ? input.resolveUsers
@@ -490,7 +515,7 @@
       if (!opts || typeof opts !== 'object') return { ok: false, error: 'ms-planner.assignTask: options required' };
       if (!opts.taskId) return { ok: false, error: 'ms-planner.assignTask: taskId is required' };
 
-      const auth = opts.auth || cfg.auth;
+      const auth = await ensureAuth(opts.auth || cfg.auth);
       const debug = typeof opts.debug === 'boolean' ? opts.debug : cfg.debug;
       const assignmentsList = parseList(opts.assignTo || opts.assignees || cfg.defaultAssignees || envGet('ms-planner.assignTo', 'planner.assignTo'));
       if (!assignmentsList.length) return { ok: false, error: 'ms-planner.assignTask: assignees required' };
