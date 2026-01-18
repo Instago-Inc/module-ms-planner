@@ -1,6 +1,6 @@
 ## v1.0.1 - Streamline Microsoft Planner automation
-Microsoft Planner helper centralizes task creation and assignment by resolving buckets/categories, parsing priorities, and updating task metadata for smoother automation.
+Microsoft Planner helper centralizes bucket/user resolution, assignment building, task detail updates, and category syncing so Instago flows can create Planner tasks via Graph with fewer moving pieces.
 
 ### Added
-- ms-planner now exposes configuration defaults, bucket/user resolution, assignment building, priority parsing, and task detail updates to simplify Planner task creation.
-- Added helpers for parsing labels/references and ensuring plan categories stay synchronized with new tasks.
+- Added configuration defaults plus bucket/bucket-name resolution, assignment building, label/category syncing, and reference merging to simplify Planner task creation and detail updates.
+- Added `assignTask` along with robust priority/date parsing and bucket/user resolvers so Planner work stays synced even when inputs are partial.
