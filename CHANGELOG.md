@@ -1,3 +1,9 @@
+## v1.1.1 - Clarify planLink usage
+Doc examples now lean on `planLink` instead of `planId` so users quickly understand how to configure and create tasks from Planner URLs in the latest release.
+
+### Changed
+- Updated API docs and samples to highlight `planLink` configuration, remove outdated `bucketId` requirements, and refresh placeholder emails to match the documented Planner flow.
+
 ## v1.1.0 - Autoparse Planner links
 ms-planner now extracts plan IDs from Planner links and treats `ms-planner.planLink` as a primary configuration entry so task flows require less manual input.
 
