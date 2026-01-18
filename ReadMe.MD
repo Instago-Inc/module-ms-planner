@@ -29,21 +29,25 @@ It focuses on a simple, reliable path: create tasks in a plan and assign people 
 - `auth`: Graph auth overrides (access token or OAuth details used by `graph@latest`).
 - `debug`: Boolean to emit extra logs.
 
-Env keys (all optional):
+Env keys:
 
-- `ms-planner.planId`
-- `ms-planner.bucketId`
-- `ms-planner.bucket`
-- `ms-planner.assignTo` (comma- or semicolon-separated)
-- `ms-planner.resolveUsers` (`1` to enable)
+- `ms-planner.planLink`
+- `ms-planner.bucket` (optional)
+- `ms-planner.assignTo` (optional; comma- or semicolon-separated emails or user IDs)
+- `ms-planner.resolveUsers` (optional; `1` to resolve emails/UPNs into user IDs)
+
+Note: the module accepts `ms-planner.planLink` and resolves `planId` automatically when provided.
 
 ### Usage
 
 ```js
 const planner = require('ms-planner@latest');
 
+const planLink = 'https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/mytasks?...';
+const planId = (String(planLink).match(/\\/plan\\/([A-Za-z0-9_-]+)/) || [])[1] || '';
+
 planner.configure({
-  planId: 'PLAN_ID',
+  planId,
   bucketName: 'Backlog',
   resolveUsers: true
 });

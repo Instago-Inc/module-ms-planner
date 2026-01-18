@@ -72,14 +72,42 @@
     return null;
   }
 
+  function parsePlanIdFromLink(value) {
+    if (!value) return '';
+    const raw = String(value);
+    const decode = (input) => {
+      try { return decodeURIComponent(input); } catch { return input; }
+    };
+    const pickPlanId = (input) => {
+      if (!input) return '';
+      const match = String(input).match(/\/plan\/([A-Za-z0-9_-]+)/i);
+      return match ? match[1] : '';
+    };
+    const contextMatch = raw.match(/context=([^&]+)/i);
+    if (contextMatch && contextMatch[1]) {
+      const idFromContext = pickPlanId(decode(contextMatch[1]));
+      if (idFromContext) return idFromContext;
+    }
+    const urlMatch = raw.match(/webUrl=([^&]+)/i);
+    if (urlMatch && urlMatch[1]) {
+      const idFromWeb = pickPlanId(decode(urlMatch[1]));
+      if (idFromWeb) return idFromWeb;
+    }
+    return pickPlanId(raw);
+  }
+
   async function resolveBucketId(overrides, auth, debug) {
+    const link = (overrides && overrides.planLink) || sys.env.get('ms-planner.planLink');
     const bucketId =
       (overrides && overrides.bucketId) ||
       cfg.bucketId ||
       envGet('ms-planner.bucketId', 'planner.bucketId');
     if (bucketId) return { ok: true, data: String(bucketId) };
 
-    const planId = (overrides && overrides.planId) || cfg.planId || envGet('ms-planner.planId', 'planner.planId');
+    const planId = (overrides && overrides.planId)
+      || cfg.planId
+      || envGet('ms-planner.planId', 'planner.planId')
+      || (link ? parsePlanIdFromLink(link) : '');
     if (!planId) return { ok: false, error: 'ms-planner: planId is required to resolve bucket' };
 
     const bucketName =
@@ -287,11 +315,15 @@
 
       const auth = opts.auth || cfg.auth;
       const debug = typeof opts.debug === 'boolean' ? opts.debug : cfg.debug;
-      const planId = opts.planId || cfg.planId || envGet('ms-planner.planId', 'planner.planId');
+      const planLink = opts.planLink || sys.env.get('ms-planner.planLink');
+      const planId = opts.planId
+        || cfg.planId
+        || envGet('ms-planner.planId', 'planner.planId')
+        || (planLink ? parsePlanIdFromLink(planLink) : '');
       if (!planId) return { ok: false, error: 'ms-planner.createTask: planId is required' };
 
       const bucketRes = await resolveBucketId(
-        { planId, bucketId: opts.bucketId, bucketName: opts.bucketName },
+        { planId, planLink, bucketId: opts.bucketId, bucketName: opts.bucketName },
         auth,
         debug
       );
